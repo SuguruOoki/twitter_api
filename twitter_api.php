@@ -1,8 +1,13 @@
 <?php
 // twitteroauth の読み込み
-require_once 'vendor/autoload.php';
+require('vendor/autoload.php');
+require('secret_info.php');
 use Abraham\TwitterOAuth\TwitterOAuth;
-require_once('secret_info.php')
+
+if(empty($consumer_key) || empty($consumer_secret) || empty($access_token) || empty($access_token_secret)){
+  print("Error:The API access Information is not defined!\n");
+  exit(1);
+}
 
 $connection = new TwitterOAuth($consumer_key, $consumer_secret, $access_token, $access_token_secret);
 
@@ -30,10 +35,10 @@ function obj2arr($obj)
 if(count($argv) == 2){
   $keyword = $argv[1];
 } else if(count($argv) > 2){
-  print("Error:引数の数が多すぎます\n");
+  print("Error:Too many arguments!\n");
   exit(1);
 } else {
-  print("Error:引数の数が足りません\n");
+  print("Error:Too few arguments!\n");
   exit(1);
 }
 
@@ -47,8 +52,11 @@ $favorites_count = 0;
 $t = 0;
 while($t < $request_count){
 	$statuses = $connection->get("search/tweets", ["q" => $keyword, "count" => $onetime_get_num]);
-	if($statuses == 200){
-		$result = obj2arr($statuses);
+  $result = obj2arr($statuses);
+  # print_r($result['errors'][0]->code);
+
+	if(!isset($result['error'])){
+
 		$size = sizeof($result['statuses']);
 
 		//ツイートにいいね
@@ -70,7 +78,8 @@ while($t < $request_count){
 		sleep($long_sleep_seconds);
 		++$t;
 	} else {
-		print("Error: can not get tweets data");
+		print("Error: can not get tweets data\n");
+    print("status:"+(string)$statuses);
     exit(1);
 	}
 }
